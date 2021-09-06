@@ -1,6 +1,6 @@
 name: Deploy to GitHub Pages
 
-# Запускаем магию только на пуши в main
+# Запускаем магию только на пуши в master
 on:
   push:
     branches: master
@@ -24,7 +24,7 @@ jobs:
       run: dotnet publish blazor-app.csproj -c Release --output release --nologo
       
     - name: Uploading files to gh-pages branch
-      uses: GlebSviridov/github-pages-deploy-action@4.1.4
+      uses: JamesIves/github-pages-deploy-action@4.1.4
       with:
         branch: gh-pages
         folder: release/wwwroot
