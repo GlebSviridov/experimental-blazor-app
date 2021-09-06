@@ -12,7 +12,6 @@ jobs:
       # клонируем репозиторий на виртуальную машину
     - uses: actions/checkout@v2
     
-      # ставим нужный SDK (можно использовать и более старые)
     - name: Setup .NET 5
       uses: actions/setup-dotnet@v1
       with:
