@@ -1,0 +1,22 @@
+<button class="table-bordered " style="background-color: @CurrentCell.Colour; height: 100px; width: 100px" @onclick="CurrentCell.SwitchActive">
+</button>
+
+@code {
+
+    [Parameter]
+    public CellElement CurrentCell { get; set; }
+
+    public class CellElement
+    {
+        public bool IsAlive { get; set; }
+
+        public string Colour => IsAlive
+            ? "green"
+            : "white";
+
+        public void SwitchActive()
+        {
+            IsAlive = !IsAlive;
+        }
+    }
+}

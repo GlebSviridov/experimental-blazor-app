@@ -1,0 +1,202 @@
+@using static blazor_app.Pages.Cell
+@using System.Threading
+
+<h3>LifeField</h3>
+
+
+<p>Current generation: @currentGeneration</p>
+<p>Current alive cells number: @currentAlive</p>
+
+<button class="btn btn-primary" @onclick="ProcessLifeAsync">Begin life</button>
+<button class="btn btn-primary" @onclick="ProcessOneGenerationAsync">One generation step</button>
+<button class="btn btn-primary btn-danger" @onclick="Cancel">Stop</button>
+
+<table>
+    <tbody>
+    @for (var i = 0; i < CellsRowNumber; i++)
+    {
+        <tr>
+            @for (var j = 0; j < CellsColumnNumber; j++)
+            {
+                <td>
+                    <Cell CurrentCell="_cells[i, j]"></Cell>
+                </td>
+            }
+        </tr>
+    }
+    </tbody>
+</table>
+
+@code {
+    [Parameter]
+    public int CellsRowNumber { get; set; }
+    [Parameter]
+    public int CellsColumnNumber { get; set; }
+
+    private int currentGeneration = 0;
+    private int currentAlive = 0;
+
+    private CellElement[,] _cells;
+
+    private CancellationTokenSource cts = new();
+
+    private void Cancel()
+    {
+        cts.Cancel();
+        cts.Dispose();
+        cts = new CancellationTokenSource();
+        for (int i = 0; i < CellsRowNumber; i++)
+        {
+            for (int j = 0; j < CellsColumnNumber; j++)
+            {
+                _cells[i, j].IsAlive = false;
+            }
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _cells = new CellElement[CellsRowNumber, CellsColumnNumber];
+        for (int i = 0; i < CellsRowNumber; i++)
+        {
+            for (int j = 0; j < CellsColumnNumber; j++)
+            {
+                _cells[i, j] = new CellElement();
+            }
+        }
+        await Task.CompletedTask;
+    }
+
+    private void CountCurrentAlive()
+    {
+        currentAlive = 0;
+        for (int i = 0; i < CellsRowNumber; i++)
+        {
+            for (int j = 0; j < CellsColumnNumber; j++)
+            {
+                if (_cells[i, j].IsAlive)
+                {
+                    currentAlive++;
+                }
+            }
+        }
+    }
+
+    private async Task ProcessLifeAsync()
+    {
+        await ProcessCancelableLifeAsync(cts.Token);
+    }
+
+    private async Task ProcessCancelableLifeAsync(CancellationToken cancellationToken)
+    {
+        currentGeneration = 0;
+        CountCurrentAlive();
+        while (currentAlive > 0)
+        {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+            await ProcessOneGenerationAsync();
+        }
+    }
+
+    private async Task ProcessOneGenerationAsync()
+    {
+        var newCells = new CellElement[CellsRowNumber, CellsColumnNumber];
+        for (int i = 0; i < CellsRowNumber; i++)
+        {
+            for (int j = 0; j < CellsColumnNumber; j++)
+            {
+                newCells[i, j] = new CellElement();
+                newCells[i, j].IsAlive = CheckState(i, j, _cells[i, j].IsAlive);
+            }
+        }
+
+        _cells = newCells;
+        currentGeneration++;
+        CountCurrentAlive();
+        await InvokeAsync(StateHasChanged);
+        await Task.Delay(1000);
+    }
+
+    private bool CheckState(int rowNumber, int columnNumber, bool isAlive)
+    {
+        var aliveNeighbours = CountAliveNeighbours(rowNumber, columnNumber);
+
+        if (isAlive)
+        {
+            return aliveNeighbours == 2;
+        }
+
+        return aliveNeighbours == 3;
+    }
+
+    private int CountAliveNeighbours(int rowNumber, int columnNumber)
+    {
+        var counter = 0;
+        if (IsAliveCell(rowNumber - 1, columnNumber - 1))
+        {
+            counter++;
+        }
+
+        if (IsAliveCell(rowNumber - 1, columnNumber))
+        {
+            counter++;
+        }
+
+        if (IsAliveCell(rowNumber - 1, columnNumber + 1))
+        {
+            counter++;
+        }
+
+        if (IsAliveCell(rowNumber, columnNumber - 1))
+        {
+            counter++;
+        }
+
+        if (IsAliveCell(rowNumber, columnNumber + 1))
+        {
+            counter++;
+        }
+
+        if (IsAliveCell(rowNumber + 1, columnNumber - 1))
+        {
+            counter++;
+        }
+
+        if (IsAliveCell(rowNumber + 1, columnNumber))
+        {
+            counter++;
+        }
+
+        if (IsAliveCell(rowNumber + 1, columnNumber + 1))
+        {
+            counter++;
+        }
+
+        return counter;
+    }
+
+    private bool IsAliveCell(int rowNumber, int columnNumber)
+    {
+        rowNumber = FixNumber(rowNumber, CellsRowNumber);
+        columnNumber = FixNumber(columnNumber, CellsColumnNumber);
+
+        return _cells[rowNumber, columnNumber].IsAlive;
+    }
+
+    private static int FixNumber(int number, int limit)
+    {
+        if (number < 0)
+        {
+            number = limit - 1;
+        }
+        if (number >= limit)
+        {
+            number = 0;
+        }
+
+        return number;
+    }
+}

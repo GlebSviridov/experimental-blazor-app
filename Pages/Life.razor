@@ -1,0 +1,28 @@
+@page "/life"
+@using System.ComponentModel.DataAnnotations
+
+<h1>Life</h1>
+
+<div>
+    размер сетки:
+    <input  type="number" min="1" @bind="rowsNumber"/>
+    <input type="number" min="2" @bind="columnsNumber"/>
+</div>
+
+<button class="btn btn-primary"  @onclick="() => _showLifeField = true">Start game</button>
+@if (_showLifeField)
+{
+    <LifeField CellsRowNumber="rowsNumber" CellsColumnNumber="columnsNumber"></LifeField>
+}
+
+
+@code {
+
+    [Required]
+    private int rowsNumber = 3;
+
+    [Required]
+    private int columnsNumber = 5;
+
+    bool _showLifeField;
+}
